@@ -1,3 +1,7 @@
+import {Login} from './Login';
+import SignUpForm from './SignUpForm';
+// import { signOut } from 'firebase/auth';
+import { auth, onAuthStateChanged, signOut } from './firebaseConfig';
 import React, { Suspense, useEffect, useRef, useState, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, useTexture, Loader, Environment, useFBX, useAnimations, OrthographicCamera } from '@react-three/drei';
@@ -12,9 +16,11 @@ import blinkData from './blendDataBlink.json';
 
 import * as THREE from 'three';
 import axios from 'axios';
-const _ = require('lodash');
 
+const _ = require('lodash');
 const host = 'http://localhost:5000'
+// const [user, setUser] = useState(null);
+
 
 function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) {
 
@@ -22,12 +28,12 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
   let morphTargetDictionaryBody = null;
   let morphTargetDictionaryLowerTeeth = null;
 
-  const [ 
-    bodyTexture, 
-    eyesTexture, 
-    teethTexture, 
-    bodySpecularTexture, 
-    bodyRoughnessTexture, 
+  const [
+    bodyTexture,
+    eyesTexture,
+    teethTexture,
+    bodySpecularTexture,
+    bodyRoughnessTexture,
     bodyNormalTexture,
     teethNormalTexture,
     // teethSpecularTexture,
@@ -38,7 +44,7 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
     hairAlphaTexture,
     hairNormalTexture,
     hairRoughnessTexture,
-    ] = useTexture([
+  ] = useTexture([
     "/images/body.webp",
     "/images/eyes.webp",
     "/images/teeth_diffuse.webp",
@@ -57,15 +63,15 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
   ]);
 
   _.each([
-    bodyTexture, 
-    eyesTexture, 
-    teethTexture, 
-    teethNormalTexture, 
-    bodySpecularTexture, 
-    bodyRoughnessTexture, 
-    bodyNormalTexture, 
-    tshirtDiffuseTexture, 
-    tshirtNormalTexture, 
+    bodyTexture,
+    eyesTexture,
+    teethTexture,
+    teethNormalTexture,
+    bodySpecularTexture,
+    bodyRoughnessTexture,
+    bodyNormalTexture,
+    tshirtDiffuseTexture,
+    tshirtNormalTexture,
     tshirtRoughnessTexture,
     hairAlphaTexture,
     hairNormalTexture,
@@ -80,17 +86,17 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
   teethNormalTexture.encoding = LinearEncoding;
   hairNormalTexture.encoding = LinearEncoding;
 
-  
+
   gltf.scene.traverse(node => {
 
 
-    if(node.type === 'Mesh' || node.type === 'LineSegments' || node.type === 'SkinnedMesh') {
+    if (node.type === 'Mesh' || node.type === 'LineSegments' || node.type === 'SkinnedMesh') {
 
       node.castShadow = true;
       node.receiveShadow = true;
       node.frustumCulled = false;
 
-    
+
       if (node.name.includes("Body")) {
 
         node.castShadow = true;
@@ -124,7 +130,7 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
       }
 
       if (node.name.includes("Brows")) {
-        node.material = new LineBasicMaterial({color: 0x000000});
+        node.material = new LineBasicMaterial({ color: 0x000000 });
         node.material.linewidth = 1;
         node.material.opacity = 0.5;
         node.material.transparent = true;
@@ -151,15 +157,15 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
         node.material.alphaMap = hairAlphaTexture;
         node.material.normalMap = hairNormalTexture;
         node.material.roughnessMap = hairRoughnessTexture;
-        
+
         node.material.transparent = true;
         node.material.depthWrite = false;
         node.material.side = 2;
         node.material.color.setHex(0x000000);
-        
+
         node.material.envMapIntensity = 0.3;
 
-      
+
       }
 
       if (node.name.includes("TSHIRT")) {
@@ -192,25 +198,25 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
       return;
 
     makeSpeech(text)
-    .then( response => {
+      .then(response => {
 
-      let {blendData, filename}= response.data;
+        let { blendData, filename } = response.data;
 
-      let newClips = [ 
-        createAnimation(blendData, morphTargetDictionaryBody, 'HG_Body'), 
-        createAnimation(blendData, morphTargetDictionaryLowerTeeth, 'HG_TeethLower') ];
+        let newClips = [
+          createAnimation(blendData, morphTargetDictionaryBody, 'HG_Body'),
+          createAnimation(blendData, morphTargetDictionaryLowerTeeth, 'HG_TeethLower')];
 
-      filename = host + filename;
-        
-      setClips(newClips);
-      setAudioSource(filename);
+        filename = host + filename;
 
-    })
-    .catch(err => {
-      console.error(err);
-      setSpeak(false);
+        setClips(newClips);
+        setAudioSource(filename);
 
-    })
+      })
+      .catch(err => {
+        console.error(err);
+        setSpeak(false);
+
+      })
 
   }, [speak]);
 
@@ -256,21 +262,20 @@ function Avatar({ avatar_url, speak, setSpeak, text, setAudioSource, playing }) 
 
     if (playing === false)
       return;
-    
+
     _.each(clips, clip => {
-        let clipAction = mixer.clipAction(clip);
-        clipAction.setLoop(THREE.LoopOnce);
-        clipAction.play();
+      let clipAction = mixer.clipAction(clip);
+      clipAction.setLoop(THREE.LoopOnce);
+      clipAction.play();
 
     });
 
   }, [playing]);
 
-  
+
   useFrame((state, delta) => {
     mixer.update(delta);
   });
-
 
   return (
     <group name="avatar">
@@ -285,11 +290,11 @@ function makeSpeech(text) {
 }
 
 const STYLES = {
-  area: {position: 'absolute', bottom:'10px', left: '10px', zIndex: 500},
-  text: {margin: '0px', width:'300px', padding: '5px', background: 'none', color: '#ffffff', fontSize: '1.2em', border: 'none'},
-  speak: {padding: '10px', marginTop: '5px', display: 'block', color: '#FFFFFF', background: '#222222', border: 'None'},
-  area2: {position: 'absolute', top:'5px', right: '15px', zIndex: 500},
-  label: {color: '#777777', fontSize:'0.8em'}
+  area: { position: 'absolute', bottom: '10px', left: '10px', zIndex: 500 },
+  text: { margin: '0px', width: '300px', padding: '5px', background: 'none', color: '#ffffff', fontSize: '1.2em', border: 'none' },
+  speak: { padding: '10px', marginTop: '5px', display: 'block', color: '#FFFFFF', background: '#222222', border: 'None' },
+  area2: { position: 'absolute', top: '5px', right: '15px', zIndex: 500 },
+  label: { color: '#777777', fontSize: '0.8em' }
 }
 
 function App() {
@@ -297,9 +302,22 @@ function App() {
   const audioPlayer = useRef();
 
   const [speak, setSpeak] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [text, setText] = useState("My name is Arwen. I'm a virtual human who can speak whatever you type here along with realistic facial movements.");
   const [audioSource, setAudioSource] = useState(null);
   const [playing, setPlaying] = useState(false);
+
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Successfully signed out
+        console.log('User signed out');
+      })
+      .catch((error) => {
+        // Error occurred during sign out
+        console.error('Error signing out:', error);
+      });
+  };
 
   // End of play
   function playerEnded(e) {
@@ -313,76 +331,95 @@ function App() {
     audioPlayer.current.audioEl.current.play();
     setPlaying(true);
 
-  }  
+  }
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
+    });
+
+    // Clean up the listener on unmount
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div className="full">
-      <div style={STYLES.area}>
-        <textarea rows={4} type="text" style={STYLES.text} value={text} onChange={(e) => setText(e.target.value.substring(0, 200))} />
-        <button onClick={() => setSpeak(true)} style={STYLES.speak}> { speak? 'Running...': 'Speak' }</button>
+      {isLoggedIn ? (
+        <div className="full">
+          <div style={STYLES.area}>
+            <textarea rows={4} type="text" style={STYLES.text} value={text} onChange={(e) => setText(e.target.value.substring(0, 200))} />
+            <button onClick={() => setSpeak(true)} style={STYLES.speak}> {speak ? 'Running...' : 'Speak'}</button>
 
-      </div>
+          </div>
 
-      <ReactAudioPlayer
-        src={audioSource}
-        ref={audioPlayer}
-        onEnded={playerEnded}
-        onCanPlayThrough={playerReady}
-        
-      />
-      
-      {/* <Stats /> */}
-    <Canvas dpr={2} onCreated={(ctx) => {
-        ctx.gl.physicallyCorrectLights = true;
-      }}>
+          <ReactAudioPlayer
+            src={audioSource}
+            ref={audioPlayer}
+            onEnded={playerEnded}
+            onCanPlayThrough={playerReady}
 
-      <OrthographicCamera 
-      makeDefault
-      zoom={2000}
-      position={[0, 1.65, 1]}
-      />
+          />
 
-      {/* <OrbitControls
-        target={[0, 1.65, 0]}
-      /> */}
+          {/* <Stats /> */}
+          <Canvas dpr={2} onCreated={(ctx) => {
+            ctx.gl.physicallyCorrectLights = true;
+          }}>
 
-      <Suspense fallback={null}>
-        <Environment background={false} files="/images/photo_studio_loft_hall_1k.hdr" />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <Bg />
-      </Suspense>
-
-      <Suspense fallback={null}>
-
-
-
-          <Avatar 
-            avatar_url="/model.glb" 
-            speak={speak} 
-            setSpeak={setSpeak}
-            text={text}
-            setAudioSource={setAudioSource}
-            playing={playing}
+            <OrthographicCamera
+              makeDefault
+              zoom={2000}
+              position={[0, 1.65, 1]}
             />
 
-      
-      </Suspense>
+            {/* <OrbitControls
+          target={[0, 1.65, 0]}
+        /> */}
 
-  
+            <Suspense fallback={null}>
+              <Environment background={false} files="/images/photo_studio_loft_hall_1k.hdr" />
+            </Suspense>
 
-  </Canvas>
-  <Loader dataInterpolation={(p) => `Loading... please wait`}  />
-  </div>
-  )
+            <Suspense fallback={null}>
+              <Bg />
+            </Suspense>
+
+            <Suspense fallback={null}>
+
+
+
+              <Avatar
+                avatar_url="/model.glb"
+                speak={speak}
+                setSpeak={setSpeak}
+                text={text}
+                setAudioSource={setAudioSource}
+                playing={playing}
+              />
+
+
+            </Suspense>
+
+
+
+          </Canvas>
+          <Loader dataInterpolation={(p) => `Loading... please wait`} />
+          <button onClick={handleLogout}>Logout</button>
+        </div>
+      ) : (
+        <Login />
+      )}
+    </div>)
 }
 
 function Bg() {
-  
+
   const texture = useTexture('/images/bg.webp');
 
-  return(
+  return (
     <mesh position={[0, 1.5, -2]} scale={[0.8, 0.8, 0.8]}>
       <planeBufferGeometry />
       <meshBasicMaterial map={texture} />
